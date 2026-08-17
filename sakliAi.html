@@ -20,7 +20,7 @@
             }, { passive: false });
         })();
     </script>
-    <title>sakli</title>
+    <title>sakliAi</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -102,15 +102,6 @@
             transform: scale(0.95) !important; opacity: 0.85;
         }
 
-        #offline-screen {
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 40px; width: 100%; height: 100vh; height: 100dvh;
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 4000; background: var(--bg);
-        }
-        .offline-icon { width: 64px; height: 64px; stroke: var(--text-muted); margin-bottom: 24px; animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        .offline-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
-        .offline-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 28px; line-height: 1.6; max-width: 260px; }
         #auth-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; padding: 24px; background: var(--bg); z-index: 100; }
         .auth-box {
             background: var(--surface);
@@ -695,15 +686,6 @@
 </div>
 <div id="menu-overlay"></div>
 
-<div id="offline-screen">
-    <svg class="offline-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10.707 10.707a5 5 0 0 0-3.957 8.354"/><path d="M14.036 14.036a5 5 0 0 0 5.485-5.485"/><path d="M16 16v-1a5 5 0 0 0-6.196-4.896"/><path d="M22 22 2 2"/><path d="M8.5 14.5a2.5 2.5 0 0 0 2.213 3.821"/><path d="M13.5 13.5a2.5 2.5 0 0 0 3.821-2.213"/>
-    </svg>
-    <div class="offline-title">No Internet Connection</div>
-    <div class="offline-desc">Please check your network settings and try again.</div>
-    <button id="retry-btn" class="auth-btn" style="width: auto; padding: 12px 30px;">Retry Connection</button>
-</div>
-
 <div id="auth-screen">
     <div class="auth-box">
         <div class="auth-image">
@@ -751,7 +733,7 @@
                 <button id="menu-btn" title="Menu">
                     <svg viewBox="0 0 24 24"><path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>
                 </button>
-                <div class="header-title">sakli</div>
+                <div class="header-title">sakliAi</div>
                 <div class="profile-wrapper" id="profile-wrapper" title="Open Profile" onclick="openModalState('profile')">
                     <canvas id="profile-icon" width="32" height="32" style="border-radius:50%; border:2px solid var(--accent); cursor:pointer; display:block;"></canvas>
                 </div>
@@ -1062,8 +1044,6 @@
         }
     }
 
-    // Escapes HTML-significant characters so dynamic text (AI output, file names, etc.)
-    // can never be interpreted as markup when inserted via innerHTML.
     function escapeHTML(str) {
         return String(str ?? '')
             .replace(/&/g, '&amp;')
@@ -1073,8 +1053,6 @@
             .replace(/'/g, '&#39;');
     }
 
-    // Safely extracts a file extension. Plain split('.').pop() returns the whole
-    // filename when there's no dot (e.g. "README" -> "README"), which is wrong.
     function getFileExt(name) {
         const n = String(name || '');
         const dotIndex = n.lastIndexOf('.');
@@ -1146,9 +1124,6 @@
     document.addEventListener('DOMContentLoaded', () => {
         const API_URL = "https://kipqhwyqhzmpvlslzdky.supabase.co/functions/v1/sakli-Ai/";
 
-        // Generates a client-side UUID for each message so it can be upserted
-        // to Supabase idempotently (see messages.client_id) — safe to retry
-        // without ever creating a duplicate row.
         function genId() {
             if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -1168,13 +1143,13 @@
                     req.onsuccess = async (e) => {
                         this.db = e.target.result;
                         try {
-                            if (localStorage.getItem('sakli_chats')) {
-                                await this.set('sakli_chats', localStorage.getItem('sakli_chats'));
-                                localStorage.removeItem('sakli_chats');
+                            if (localStorage.getItem('sakliAi_chats')) {
+                                await this.set('sakliAi_chats', localStorage.getItem('sakliAi_chats'));
+                                localStorage.removeItem('sakliAi_chats');
                             }
-                            if (localStorage.getItem('sakli_user_name')) {
-                                await this.set('sakli_user_name', localStorage.getItem('sakli_user_name'));
-                                localStorage.removeItem('sakli_user_name');
+                            if (localStorage.getItem('sakliAi_user_name')) {
+                                await this.set('sakliAi_user_name', localStorage.getItem('sakliAi_user_name'));
+                                localStorage.removeItem('sakliAi_user_name');
                             }
                         } catch(err) {}
                         resolve();
@@ -1211,7 +1186,6 @@
             }
         };
 
-        const offlineScreen = document.getElementById('offline-screen');
         const authScreen = document.getElementById('auth-screen');
         const chatScreen = document.getElementById('chat-screen');
         const userInput = document.getElementById('user-input');
@@ -1257,36 +1231,7 @@
         const sendIconHTML = `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></svg>`;
         const stopIconHTML = `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>`;
 
-        async function hasRealInternet() {
-            if (!navigator.onLine) return false;
-            try {
-                const res = await fetch(
-                    'https://kipqhwyqhzmpvlslzdky.supabase.co/rest/v1/',
-                    {
-                        method: 'GET',
-                        headers: {
-                            'apikey': supabaseAnonKey,
-                            'Authorization': 'Bearer ' + supabaseAnonKey
-                        },
-                        signal: AbortSignal.timeout(6000)
-                    }
-                );
-                return true;
-            } catch (e) {
-                return false;
-            }
-        }
-
-        async function checkNetworkAndInitialize() {
-            const online = await hasRealInternet();
-            if (!online) {
-                offlineScreen.style.display = 'flex';
-                authScreen.style.display = 'none';
-                chatScreen.style.display = 'none';
-                return;
-            }
-
-            offlineScreen.style.display = 'none';
+        async function initializeApp() {
             const { data: { session } } = await supabaseClient.auth.getSession();
 
             if (!session) {
@@ -1302,23 +1247,8 @@
             }
         }
 
-        window.addEventListener('online', checkNetworkAndInitialize);
-        window.addEventListener('offline', checkNetworkAndInitialize);
-        
-        function smartRetry() {
-            const btn = document.getElementById('retry-btn');
-            btn.disabled = true;
-            btn.textContent = "Connecting...";
+        window.addEventListener('online', initializeApp);
 
-            setTimeout(async () => {
-                btn.disabled = false;
-                btn.textContent = "Retry Connection";
-                await checkNetworkAndInitialize();
-            }, 1500);
-        }
-
-        document.getElementById('retry-btn').addEventListener('click', smartRetry);
-        
         supabaseClient.auth.onAuthStateChange((event, session) => {
             if (!navigator.onLine) return;
             if (event === 'SIGNED_IN') {
@@ -1337,13 +1267,11 @@
         });
 
         function saveChatsLocally() {
-            idbStore.set('sakli_chats', JSON.stringify(chats)).catch((err) => {
+            idbStore.set('sakliAi_chats', JSON.stringify(chats)).catch((err) => {
                 console.error('Failed to save chats to IndexedDB:', err);
             });
         }
 
-        // Re-uploads chats (and their messages) that exist locally but were never
-        // confirmed in the cloud — recovers data from offline use or failed inserts.
         async function pushUnsyncedChatsToCloud(chatIds, userId) {
             for (const id of chatIds) {
                 const chat = chats[id];
@@ -1355,7 +1283,7 @@
                     if (chat.messages && chat.messages.length > 0) {
                         let localDirty = false;
                         const rows = chat.messages.map(m => {
-                            if (!m.clientId) { m.clientId = genId(); localDirty = true; } // backfill for messages created before client_id existed
+                            if (!m.clientId) { m.clientId = genId(); localDirty = true; }
                             return {
                                 client_id: m.clientId,
                                 chat_id: id,
@@ -1378,7 +1306,7 @@
             const { data: profile, error: fetchErr } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
             if (profile) {
                 currentUserName = profile.full_name || 'User'; window._currentUserName = currentUserName;
-                idbStore.set('sakli_user_name', currentUserName);
+                idbStore.set('sakliAi_user_name', currentUserName);
                 document.getElementById('user-name-input').value = currentUserName;
                 setProfileAvatar(currentUserName);
                 if (chatBox && chatBox.classList.contains('empty')) {
@@ -1407,17 +1335,13 @@
             const { data: dbChats } = await supabaseClient.from('chats').select('*').eq('user_id', userId);
             const { data: dbMsgs } = await supabaseClient.from('messages').select('*').eq('user_id', userId).order('created_at', { ascending: true });
 
-            let localChatsStr = await idbStore.get('sakli_chats');
+            let localChatsStr = await idbStore.get('sakliAi_chats');
             let localChats = localChatsStr ? JSON.parse(localChatsStr) : {};
 
             const cloudChatIds = new Set((dbChats || []).map(c => c.id));
 
             let mergedChats = {};
 
-            // FIX: previously any local chat missing from the cloud table was silently
-            // dropped here (and then overwritten to IndexedDB), permanently deleting
-            // chats created offline or whose insert() failed. Now we always keep local
-            // chats, and separately push any not-yet-synced ones back up to Supabase.
             const unsyncedChatIds = [];
             Object.keys(localChats).forEach(id => {
                 mergedChats[id] = { ...localChats[id] };
@@ -1456,8 +1380,6 @@
             chats = mergedChats;
             saveChatsLocally();
 
-            // Retry-push any chats that exist locally but weren't found in the cloud —
-            // this recovers chats/messages created while offline or lost to a failed insert.
             if (navigator.onLine && unsyncedChatIds.length > 0) {
                 pushUnsyncedChatsToCloud(unsyncedChatIds, userId).catch(() => {});
             }
@@ -1543,7 +1465,7 @@
                 await supabaseClient.from('profiles').update({ full_name: newName }).eq('id', currentUserId);
             }
             currentUserName = newName; window._currentUserName = currentUserName;
-            idbStore.set('sakli_user_name', newName);
+            idbStore.set('sakliAi_user_name', newName);
             setProfileAvatar(newName);
             if (chatBox.classList.contains('empty')) displayWelcomeInterface(true);
             saveNameBtn.textContent = 'Saved!'; saveNameBtn.style.background = 'var(--success)';
@@ -1603,7 +1525,7 @@
                 }, 1400);
                 return;
             }
-            const MAX_TEXT_FILE_SIZE = 2 * 1024 * 1024; // 2MB — keeps prompt payloads reasonable
+            const MAX_TEXT_FILE_SIZE = 2 * 1024 * 1024;
             if (file.size > MAX_TEXT_FILE_SIZE) {
                 event.target.value = '';
                 inputBar.classList.add('has-file');
@@ -1654,7 +1576,7 @@
         }
 
         async function handleSend() {
-            if (!navigator.onLine) { offlineScreen.style.display = 'flex'; chatScreen.style.display = 'none'; return; }
+            if (!navigator.onLine) return;
             const text = userInput.value.trim();
             isUserAtBottom = true;
 
@@ -1819,7 +1741,7 @@
             removeTypingIndicator();
             if (chatBox.classList.contains('empty')) { chatBox.innerHTML = ''; chatBox.classList.remove('empty'); }
             const container = document.createElement('div'); container.className = 'message-container bot-message-container';
-            container.innerHTML = `<div class="bot-name">sakli-Img</div><div class="image-skeleton"></div>`;
+            container.innerHTML = `<div class="bot-name">sakliAi-Img</div><div class="image-skeleton"></div>`;
             chatBox.appendChild(container); 
             scrollToBottomIfNeeded();
 
@@ -1858,7 +1780,7 @@
 
                         img.onload = () => {
                             if (currentChatId === requestChatId) {
-                                container.innerHTML = `<div class="bot-name">sakli-Img</div>`;
+                                container.innerHTML = `<div class="bot-name">sakliAi-Img</div>`;
                                 img.style.display = 'block';
                                 container.appendChild(img);
                                 requestAnimationFrame(() => img.classList.add('developed'));
@@ -1871,7 +1793,7 @@
 
                         img.onerror = () => {
                             if (currentChatId === requestChatId) {
-                                container.innerHTML = `<div class="bot-name">sakli-Img</div><div class="message-text" style="color: var(--danger);">Error: Failed to load generated image. Please try again.</div>`;
+                                container.innerHTML = `<div class="bot-name">sakliAi-Img</div><div class="message-text" style="color: var(--danger);">Error: Failed to load generated image. Please try again.</div>`;
                                 scrollToBottomIfNeeded();
                                 isGenerating = false;
                                 resetSendButtonUI();
@@ -1884,524 +1806,5 @@
             } catch (error) {
                 if (error.name === 'AbortError') { container.remove(); isGenerating = false; resetSendButtonUI(); return; }
                 if (currentChatId === requestChatId) {
-                    container.innerHTML = `<div class="bot-name">sakli-Img</div><div class="message-text">Error: ${escapeHTML(error.message)}</div>`;
-                }
-                isGenerating = false;
-                resetSendButtonUI();
-            }
-        }
-
-        function downloadImage(url, filename) {
-            fetch(url)
-                .then(response => response.blob())
-                .then(blob => {
-                    const blobUrl = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = blobUrl;
-                    a.download = filename || 'generated_image.png';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(blobUrl);
-                    document.body.removeChild(a);
-                })
-                .catch(() => alert('Failed to download image.'));
-        }
-
-        function appendImageActionBar(container, fullText, msgIndex) {
-            const bar = document.createElement('div'); bar.className = 'bot-action-bar';
-            const icons = {
-                react: `<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
-                reload: `<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`,
-                download: `<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>`
-            };
-            const checkIcon = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
-            const createBtn = (cls, title, icon, onClick) => { const b = document.createElement('button'); b.className = `bot-action-btn ${cls}`; b.title = title; b.innerHTML = icon; b.addEventListener('click', onClick); return b; };
-
-            const reactBtn = createBtn('react-btn', 'Love', icons.react, (e) => { e.stopPropagation(); reactBtn.classList.toggle('active'); });
-            const reloadBtn = createBtn('reload-btn', 'Regenerate', icons.reload, async (e) => {
-                e.stopPropagation(); if(!currentChatId || !navigator.onLine) return;
-                chats[currentChatId].messages.splice(msgIndex); loadChat(currentChatId); generateImage(fullText);
-            });
-            const downloadBtn = createBtn('download-btn', 'Download', icons.download, (e) => {
-                e.stopPropagation(); e.preventDefault();
-                const imgEl = container.querySelector('.generated-image');
-                if (imgEl && imgEl.src) {
-                    const showSuccess = () => { downloadBtn.innerHTML = checkIcon; downloadBtn.classList.add('active'); setTimeout(() => { downloadBtn.innerHTML = icons.download; downloadBtn.classList.remove('active'); }, 2000); };
-                    downloadImage(imgEl.src, `sakli-Img-${Date.now()}.png`);
-                    showSuccess();
-                }
-            });
-            bar.append(reactBtn, reloadBtn, downloadBtn); container.appendChild(bar);
-        }
-
-        async function typewriterEffect(container, text, labelEl, speed = 10, reqChatId = currentChatId) {
-            return new Promise((resolve) => {
-                const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g; let lastIndex = 0, match; const segments = [];
-                while ((match = codeBlockRegex.exec(text)) !== null) {
-                    if (match.index > lastIndex) segments.push({ type: 'text', content: text.substring(lastIndex, match.index) });
-                    segments.push({ type: 'code', lang: match[1] || 'code', content: match[2].trim() }); lastIndex = codeBlockRegex.lastIndex;
-                }
-                if (lastIndex < text.length) segments.push({ type: 'text', content: text.substring(lastIndex) });
-                if (segments.length === 0) segments.push({ type: 'text', content: text });
-                let segIndex = 0;
-
-                function processNextSegment() {
-                    if (!isGenerating || currentChatId !== reqChatId) { resolve(); return; }
-
-                    if (document.visibilityState === 'hidden') {
-                        resolve(); instantCompleteBotResponse(); return;
-                    }
-
-                    if (segIndex >= segments.length) { if (labelEl) { const dots = labelEl.querySelector('.writing-dots'); if (dots) dots.remove(); } resolve(); return; }
-                    const seg = segments[segIndex++];
-                    if (seg.type === 'code') { 
-                        container.appendChild(createCodeBlockElement(seg.content, seg.lang)); 
-                        scrollToBottomIfNeeded(); 
-                        processNextSegment(); 
-                    } else {
-                        const textDiv = document.createElement('div'); textDiv.className = 'message-text'; container.appendChild(textDiv);
-                        let i = 0; const chars = seg.content;
-                        function typeChar() {
-                            if (!isGenerating || currentChatId !== reqChatId) { resolve(); return; }
-
-                            if (document.visibilityState === 'hidden') {
-                                resolve(); instantCompleteBotResponse(); return;
-                            }
-
-                            if (i < chars.length) {
-                                textDiv.innerHTML = escapeHTML(chars.substring(0, i + 1)).replace(/\n/g, '<br>') + '<span class="cursor-blink">▌</span>';
-                                scrollToBottomIfNeeded(); 
-                                i++;
-                                let tId = setTimeout(typeChar, speed); typewriterTimeouts.push(tId);
-                            } else { textDiv.innerHTML = escapeHTML(chars).replace(/\n/g, '<br>'); processNextSegment(); }
-                        }
-                        typeChar();
-                    }
-                }
-                processNextSegment();
-            });
-        }
-
-        function instantCompleteBotResponse() {
-            if (!activeTypewriter) return;
-            typewriterTimeouts.forEach(clearTimeout); typewriterTimeouts = [];
-            const { container, text, botNameEl, msgIndex, reqChatId } = activeTypewriter;
-
-            if (botNameEl) { const dots = botNameEl.querySelector('.writing-dots'); if (dots) dots.remove(); }
-            const nodesToRemove = [];
-            container.childNodes.forEach(n => { if (n !== botNameEl) nodesToRemove.push(n); });
-            nodesToRemove.forEach(n => n.remove());
-
-            const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g; let lastIndex = 0, match;
-            while ((match = codeBlockRegex.exec(text)) !== null) {
-                const textBefore = text.substring(lastIndex, match.index).trim();
-                if (textBefore) { const d = document.createElement('div'); d.className = 'message-text'; d.innerHTML = escapeHTML(textBefore).replace(/\n/g, '<br>'); container.appendChild(d); }
-                container.appendChild(createCodeBlockElement(match[2].trim(), match[1] || 'code')); lastIndex = codeBlockRegex.lastIndex;
-            }
-            const textAfter = text.substring(lastIndex).trim();
-            if (textAfter) { const d = document.createElement('div'); d.className = 'message-text'; d.innerHTML = escapeHTML(textAfter).replace(/\n/g, '<br>'); container.appendChild(d); }
-            if (!container.querySelector('.bot-action-bar')) { appendBotActionBar(container, text, msgIndex); }
-
-            removeTypingIndicator(); resetSendButtonUI(); isGenerating = false; activeTypewriter = null;
-            if (currentChatId === reqChatId) { scrollToBottomIfNeeded(); }
-        }
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden' && isGenerating && activeTypewriter) {
-                instantCompleteBotResponse();
-            }
-        });
-
-        function appendBotActionBar(container, fullText, msgIndex) {
-            const bar = document.createElement('div'); bar.className = 'bot-action-bar';
-            const icons = {
-                react: `<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
-                reload: `<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`,
-                copy: `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`
-            };
-            const checkIcon = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
-            const createBtn = (cls, title, icon, onClick) => { const b = document.createElement('button'); b.className = `bot-action-btn ${cls}`; b.title = title; b.innerHTML = icon; b.addEventListener('click', onClick); return b; };
-
-            const reactBtn = createBtn('react-btn', 'Love', icons.react, (e) => {
-                e.stopPropagation();
-                reactBtn.classList.toggle('active');
-            });
-            const reloadBtn = createBtn('reload-btn', 'Regenerate', icons.reload, async (e) => {
-                e.stopPropagation(); if(!currentChatId || !navigator.onLine) return;
-                chats[currentChatId].messages.splice(msgIndex); loadChat(currentChatId); showTypingIndicator(); await triggerBotResponse();
-            });
-            const copyBtn = createBtn('copy-btn', 'Copy', icons.copy, (e) => {
-                e.stopPropagation(); e.preventDefault();
-                const showSuccess = () => { copyBtn.innerHTML = checkIcon; copyBtn.classList.add('active'); setTimeout(() => { copyBtn.innerHTML = icons.copy; copyBtn.classList.remove('active'); }, 2000); };
-                const fallback = () => {
-                    const ta = document.createElement('textarea'); ta.value = fullText; ta.style.cssText = 'position:absolute;left:-9999px;top:0;';
-                    document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); showSuccess(); } catch(err){} document.body.removeChild(ta);
-                };
-                if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(fullText).then(showSuccess).catch(fallback); else fallback();
-            });
-            bar.append(reactBtn, reloadBtn, copyBtn); container.appendChild(bar);
-        }
-
-        function addMessageToDOM(message, msgIndex = -1) {
-            const { content, file, isUser } = message;
-            if (chatBox.classList.contains('empty')) { chatBox.innerHTML = ''; chatBox.classList.remove('empty'); }
-            const container = document.createElement('div'); container.className = `message-container ${isUser ? 'user-message-container' : 'bot-message-container'}`;
-            if (isUser) {
-                const bubble = document.createElement('div'); bubble.className = 'user-message-bubble';
-                if (file) {
-                    const ext = getFileExt(file.name);
-                    const chip = document.createElement('div'); chip.className = 'msg-file-chip';
-                    const iconSvg = getFileSvg(ext);
-                    chip.innerHTML = `<span class="chip-icon">${iconSvg}</span><span class="chip-name">${escapeHTML(file.name)}</span><span class="chip-sep">·</span><span class="chip-type">${escapeHTML(ext.toUpperCase())}</span>`; bubble.appendChild(chip);
-                }
-                if (content) {
-                    const textDiv = document.createElement('div');
-                    textDiv.className = 'user-msg-text';
-                    textDiv.textContent = content;
-
-                    if (content.length > 200) {
-                        textDiv.classList.add('collapsed');
-                        const toggleBtn = document.createElement('button');
-                        toggleBtn.className = 'prompt-toggle-btn';
-                        toggleBtn.textContent = 'Show more';
-                        toggleBtn.onclick = (e) => {
-                            e.stopPropagation();
-                            const isCollapsed = textDiv.classList.toggle('collapsed');
-                            toggleBtn.textContent = isCollapsed ? 'Show more' : 'Show less';
-                        };
-                        bubble.appendChild(textDiv);
-                        bubble.appendChild(toggleBtn);
-                    } else {
-                        bubble.appendChild(textDiv);
-                    }
-                }
-                container.appendChild(bubble);
-
-                if (msgIndex !== -1) {
-                    const bar = document.createElement('div'); bar.className = 'user-action-bar';
-                    const editBtn = document.createElement('button'); editBtn.className = 'user-action-btn'; editBtn.title = 'Edit';
-                    editBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Edit`;
-
-                    const copyUserBtn = document.createElement('button'); copyUserBtn.className = 'user-action-btn'; copyUserBtn.title = 'Copy';
-                    const copyUserIcon = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
-                    const checkUserIcon = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
-                    copyUserBtn.innerHTML = copyUserIcon + ' Copy';
-                    copyUserBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        const txt = chats[currentChatId]?.messages[msgIndex]?.content || '';
-                        const showOk = () => { copyUserBtn.innerHTML = checkUserIcon + ' Copied'; setTimeout(() => { copyUserBtn.innerHTML = copyUserIcon + ' Copy'; }, 2000); };
-                        const fb = () => { const ta = document.createElement('textarea'); ta.value = txt; ta.style.cssText='position:absolute;left:-9999px;'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');showOk();}catch(err){} document.body.removeChild(ta); };
-                        if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(showOk).catch(fb); else fb();
-                    };
-
-                    bubble.addEventListener('click', (e) => {
-                        e.stopPropagation(); document.querySelectorAll('.user-action-bar').forEach(b => { if(b !== bar) b.classList.remove('show'); });
-                        bar.classList.toggle('show');
-                    });
-
-                    bubble.addEventListener('contextmenu', (e) => {
-                        e.preventDefault(); e.stopPropagation();
-                        document.querySelectorAll('.user-action-bar').forEach(b => { if(b !== bar) b.classList.remove('show'); });
-                        bar.classList.toggle('show');
-                    });
-                    let pressTimer;
-                    bubble.addEventListener('touchstart', () => {
-                        pressTimer = setTimeout(() => {
-                            document.querySelectorAll('.user-action-bar').forEach(b => { if(b !== bar) b.classList.remove('show'); });
-                            bar.classList.add('show');
-                        }, 500);
-                    });
-                    bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
-                    bubble.addEventListener('touchmove', () => clearTimeout(pressTimer));
-
-                    editBtn.onclick = (e) => {
-                        e.stopPropagation(); if(!currentChatId) return;
-                        const editMsgIndex = msgIndex;
-                        bar.classList.remove('show');
-
-                        userInput.value = chats[currentChatId].messages[editMsgIndex].content;
-                        userInput.style.height = 'auto';
-                        userInput.style.height = userInput.scrollHeight + 'px';
-                        userInput.focus();
-                        userInput.dataset.editIndex = editMsgIndex;
-                    };
-                    bar.append(copyUserBtn, editBtn); container.appendChild(bar);
-                }
-            } else if (message.file_url) {
-                container.dataset.msgIndex = msgIndex; container.innerHTML = `<div class="bot-name">sakli-Img</div>`;
-                const img = document.createElement('img'); img.className = 'generated-image'; img.src = message.file_url; img.alt = content || 'generated image';
-                img.onload = () => requestAnimationFrame(() => img.classList.add('developed'));
-                container.appendChild(img);
-                if (msgIndex !== -1) appendImageActionBar(container, content, msgIndex);
-            } else {
-                container.dataset.msgIndex = msgIndex; container.innerHTML = `<div class="bot-name">sakliAi</div>`;
-                const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g; let lastIndex = 0, match;
-                while ((match = codeBlockRegex.exec(content)) !== null) {
-                    const textBefore = content.substring(lastIndex, match.index).trim();
-                    if (textBefore) { const d = document.createElement('div'); d.className = 'message-text'; d.innerHTML = escapeHTML(textBefore).replace(/\n/g, '<br>'); container.appendChild(d); }
-                    container.appendChild(createCodeBlockElement(match[2].trim(), match[1] || 'code')); lastIndex = codeBlockRegex.lastIndex;
-                }
-                const textAfter = content.substring(lastIndex).trim();
-                if (textAfter) { const d = document.createElement('div'); d.className = 'message-text'; d.innerHTML = escapeHTML(textAfter).replace(/\n/g, '<br>'); container.appendChild(d); }
-                if (msgIndex !== -1) appendBotActionBar(container, content, msgIndex);
-            }
-            chatBox.appendChild(container); 
-            scrollToBottomIfNeeded();
-        }
-
-        function createCodeBlockElement(code, language) {
-            const wrapper = document.createElement('div'); wrapper.className = 'code-block-wrapper';
-            const pre = document.createElement('pre'); const codeEl = document.createElement('code'); codeEl.textContent = code; pre.appendChild(codeEl);
-            const footer = document.createElement('div'); footer.className = 'code-block-footer';
-            const copyIconHTML  = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
-            const checkIconHTML = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
-            const copyBtn = document.createElement('button'); copyBtn.className = 'code-action-btn'; copyBtn.title = 'Copy'; copyBtn.innerHTML = copyIconHTML;
-            copyBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); const showOk = () => { copyBtn.innerHTML = checkIconHTML; setTimeout(() => { copyBtn.innerHTML = copyIconHTML; }, 2000); };
-                const fb = () => { const ta = document.createElement('textarea'); ta.value = code; ta.style.cssText='position:absolute;left:-9999px;'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');showOk();}catch(err){} document.body.removeChild(ta); };
-                if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(code).then(showOk).catch(fb); else fb();
-            });
-            footer.appendChild(copyBtn); wrapper.appendChild(pre); wrapper.appendChild(footer); return wrapper;
-        }
-
-        function showTypingIndicator() {
-            if (chatBox.classList.contains('empty')) { chatBox.innerHTML = ''; chatBox.classList.remove('empty'); }
-            const c = document.createElement('div'); c.className = 'message-container bot-message-container'; c.id = 'typing-indicator-container';
-            c.innerHTML = `<div class="bot-name">sakliAi</div><div class="typing-indicator"><span></span><span></span><span></span></div>`;
-            chatBox.appendChild(c); 
-            scrollToBottomIfNeeded();
-        }
-        function removeTypingIndicator() { document.getElementById('typing-indicator-container')?.remove(); }
-
-        function displayWelcomeInterface(force = false) {
-            if (!force && welcomeShown) return;
-            welcomeShown = true;
-            currentChatId = null;
-            const hasName = currentUserName && currentUserName !== 'User' && currentUserName.trim() !== '';
-            const greetingLine = hasName ? `<p class="welcome-greeting">Hey ${currentUserName},</p>` : '';
-            chatBox.innerHTML = `
-                <div class="welcome-container">
-                    ${greetingLine}
-                    <p>How Can I Help You Today?</p>
-                </div>
-            `;
-            chatBox.classList.add('empty');
-            setActiveHistoryItem();
-        }
-
-        function loadChat(chatId) {
-            stopAllActiveProcesses(); currentChatId = chatId; const chat = chats[chatId]; chatBox.innerHTML = ''; chatBox.classList.remove('empty');
-            if (chat && chat.messages.length > 0) { chat.messages.forEach((msg, idx) => addMessageToDOM(msg, idx)); } else { displayWelcomeInterface(); currentChatId = chatId; }
-            setActiveHistoryItem(); 
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function setActiveHistoryItem() {
-            document.querySelectorAll('#chat-history-list li').forEach(li => {
-                if (li.dataset.chatId === currentChatId) {
-                    li.classList.add('active');
-                } else {
-                    li.classList.remove('active');
-                }
-            });
-        }
-
-        function updateHistoryList() {
-            const filterText = historySearch ? historySearch.value.trim().toLowerCase() : '';
-            historyList.innerHTML = '';
-            const sortedIds = Object.keys(chats).sort((a, b) => b.localeCompare(a));
-
-            const pinnedIds = sortedIds.filter(id => chats[id].isPinned && (!filterText || chats[id].title.toLowerCase().includes(filterText)));
-            const unpinnedIds = sortedIds.filter(id => !chats[id].isPinned && (!filterText || chats[id].title.toLowerCase().includes(filterText)));
-
-            if (pinnedIds.length > 0) {
-                const pinnedHeader = document.createElement('div'); pinnedHeader.className = 'history-section-header'; pinnedHeader.innerHTML = 'Pinned Folders'; historyList.appendChild(pinnedHeader);
-                const pinnedWrapper = document.createElement('div'); pinnedWrapper.className = 'history-pinned-section';
-                pinnedIds.forEach(id => { const li = createChatLiElement(id); pinnedWrapper.appendChild(li); });
-                historyList.appendChild(pinnedWrapper);
-            }
-
-            if (unpinnedIds.length > 0) {
-                const recentHeader = document.createElement('div'); recentHeader.className = 'history-section-header'; recentHeader.innerHTML = 'Recent Chats'; historyList.appendChild(recentHeader);
-                unpinnedIds.forEach(id => { const li = createChatLiElement(id); historyList.appendChild(li); });
-            }
-            setActiveHistoryItem();
-        }
-
-        function createChatLiElement(id) {
-            const li = document.createElement('li'); li.dataset.chatId = id;
-            
-            li.addEventListener('pointerdown', (e) => {
-                if (!e.target.closest('.history-options-btn')) {
-                    li.classList.add('is-pressed');
-                }
-            });
-            li.addEventListener('pointerup', () => li.classList.remove('is-pressed'));
-            li.addEventListener('pointerleave', () => li.classList.remove('is-pressed'));
-            li.addEventListener('pointercancel', () => li.classList.remove('is-pressed'));
-
-            const folderIcon = document.createElement('span');
-            folderIcon.className = 'history-folder-icon';
-            folderIcon.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
-            li.appendChild(folderIcon);
-
-            const titleSpan = document.createElement('span'); titleSpan.className = 'history-title'; titleSpan.textContent = chats[id].title; li.appendChild(titleSpan);
-
-            const optBtn = document.createElement('button'); optBtn.className = 'history-options-btn'; optBtn.innerHTML = '⋮';
-
-            optBtn.onclick = (e) => {
-                e.stopPropagation();
-                const bsOverlay   = document.getElementById('bs-overlay');
-                const bsPanel     = document.getElementById('bs-panel');
-                const bsPinLbl    = document.getElementById('bs-pin-label');
-                const bsPinBtn    = document.getElementById('bs-pin-btn');
-                const bsRenameBtn = document.getElementById('bs-rename-btn');
-                const bsDeleteBtn = document.getElementById('bs-delete-btn');
-
-                bsPinLbl.textContent = chats[id].isPinned ? 'Unpin' : 'Pin';
-
-                bsDeleteBtn.dataset.confirming = "";
-                bsDeleteBtn.style.background = "transparent";
-                bsDeleteBtn.innerHTML = `
-                    <span class="bs-icon"><svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span>
-                    <span>Delete</span>
-                `;
-
-                function closeBS() {
-                    bsPanel.classList.remove('show');
-                    bsPanel.classList.add('hide');
-                    bsOverlay.classList.remove('show');
-                    setTimeout(() => { bsPanel.classList.remove('hide'); bsPanel.style.display='none'; bsOverlay.style.display='none'; }, 200);
-                }
-
-                bsOverlay.style.display = 'block';
-                bsPanel.style.display = 'block';
-                requestAnimationFrame(() => { bsOverlay.classList.add('show'); bsPanel.classList.add('show'); });
-
-                bsOverlay.onclick = closeBS;
-
-                bsPinBtn.onclick = async () => {
-                    closeBS(); chats[id].isPinned = !chats[id].isPinned; saveChatsLocally();
-                    if (navigator.onLine) await supabaseClient.from('chats').update({ is_pinned: chats[id].isPinned }).eq('id', id);
-                    updateHistoryList();
-                };
-                bsRenameBtn.onclick = () => {
-                    closeBS();
-                    setTimeout(() => showCustomPrompt('Rename Chat', chats[id].title, (n) => {
-                        if (n && n.trim()) { chats[id].title = n.trim(); saveChatsLocally(); if (navigator.onLine) supabaseClient.from('chats').update({ title: n.trim() }).eq('id', id); updateHistoryList(); }
-                    }), 200);
-                };
-                
-                bsDeleteBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    if (!bsDeleteBtn.dataset.confirming) {
-                        bsDeleteBtn.dataset.confirming = "true";
-                        bsDeleteBtn.style.background = "rgba(247, 82, 79, 0.15)";
-                        bsDeleteBtn.innerHTML = `
-                            <span class="bs-icon" style="background: var(--danger); border-color: var(--danger); color: #fff;">
-                                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/></svg>
-                            </span>
-                            <span style="font-weight: 700;">Confirm Delete?</span>
-                        `;
-                    } else {
-                        bsDeleteBtn.disabled = true;
-                        bsDeleteBtn.innerHTML = `
-                            <span class="bs-icon" style="background: transparent; border: none;">
-                                <div class="auth-spin" style="display:block; width:16px; height:16px; border-color: rgba(247,82,79,0.3); border-top-color: var(--danger);"></div>
-                            </span>
-                            <span>Deleting...</span>
-                        `;
-                        (async () => {
-                            try {
-                                await executeDeleteChat(id);
-                            } finally {
-                                bsDeleteBtn.disabled = false;
-                                closeBS();
-                            }
-                        })();
-                    }
-                };
-            };
-            li.appendChild(optBtn); li.onclick = () => { loadChat(id); closeActiveModalManually(); };
-            return li;
-        }
-
-        sendBtn.addEventListener('click', () => { if (isGenerating) { handleStopGeneration(); } else { handleSend(); } });
-        userInput.addEventListener('input', () => { userInput.style.height = 'auto'; userInput.style.height = Math.min(userInput.scrollHeight, 140) + 'px'; });
-        newChatBtn.addEventListener('click', () => { stopAllActiveProcesses(); if(historySearch) historySearch.value = ''; displayWelcomeInterface(true); closeActiveModalManually(); });
-        if(historySearch) { historySearch.addEventListener('input', updateHistoryList); }
-
-        confirmCancelBtn.addEventListener('click', () => { closeActiveModalManually(); });
-
-        confirmDeleteBtn.addEventListener('click', () => {
-            if (isClearingAllUnpinned) {
-                confirmDeleteBtn.innerHTML = 'Clearing...'; confirmDeleteBtn.style.opacity = '0.7'; confirmDeleteBtn.style.pointerEvents = 'none';
-                setTimeout(async () => {
-                    const unpinned = Object.keys(chats).filter(id => !chats[id].isPinned);
-
-                    if (unpinned.length > 0) {
-                        if (navigator.onLine) {
-                            await supabaseClient.from('chats').delete().in('id', unpinned);
-                        }
-                        unpinned.forEach(id => {
-                            delete chats[id];
-                        });
-                    }
-
-                    saveChatsLocally();
-                    updateHistoryList(); displayWelcomeInterface(true); closeActiveModalManually();
-                    confirmDeleteBtn.innerHTML = 'Delete'; confirmDeleteBtn.style.pointerEvents = 'auto'; confirmDeleteBtn.style.opacity = '1';
-                    isClearingAllUnpinned = false;
-                }, 400);
-            }
-        });
-
-        clearAllBtn.addEventListener('click', () => {
-            const hasUnpinned = Object.keys(chats).some(id => !chats[id].isPinned); if (!hasUnpinned) return;
-            isClearingAllUnpinned = true; confirmModalText.textContent = "Delete all recent chats?"; openModalState('confirm');
-        });
-
-        async function initializeAppLocals() {
-            const cachedName = await idbStore.get('sakli_user_name');
-            if (cachedName) { currentUserName = cachedName; window._currentUserName = currentUserName; document.getElementById('user-name-input').value = cachedName; }
-            setProfileAvatar(currentUserName || 'U');
-            const chatsStr = await idbStore.get('sakli_chats');
-            chats = chatsStr ? JSON.parse(chatsStr) : {};
-            Object.keys(chats).forEach(id => { if (chats[id].isPinned === undefined) chats[id].isPinned = false; });
-            updateHistoryList();
-            displayWelcomeInterface();
-        }
-
-        idbStore.init().then(async () => {
-            await initializeAppLocals();
-            checkNetworkAndInitialize();
-        }).catch(async (err) => {
-            console.error("IndexedDB failed to init", err);
-            await initializeAppLocals();
-            checkNetworkAndInitialize();
-        });
-
-        menuBtn.addEventListener('click', () => openModalState('menu'));
-        menuOverlay.addEventListener('click', () => closeActiveModalManually());
-        addBtn.addEventListener('click', () => { setMode('chat'); fileUploadInput.click(); });
-        fileUploadInput.addEventListener('change', handleFileUpload);
-        imageModeBtn.addEventListener('click', () => { setMode(currentMode === 'image' ? 'chat' : 'image'); });
-
-        function setMode(mode) {
-            currentMode = mode;
-            if (mode === 'image') {
-                imageModeBtn.classList.add('mode-active');
-                imageModeBtn.title = 'Image mode active — tap for Chat';
-                userInput.placeholder = 'Describe an image...';
-            } else {
-                imageModeBtn.classList.remove('mode-active');
-                imageModeBtn.title = 'Image mode';
-                userInput.placeholder = 'Start typing...';
-            }
-        }
-        setMode('chat');
-    });
-</script>
-</body>
-</html>
+                    container.innerHTML = `<div class="bot-name">sakliAi-Img</div><div class="message-text">Error: ${escapeHTML(error.message)}</div>`;
+       
